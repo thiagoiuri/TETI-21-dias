@@ -31,7 +31,7 @@ export const LoginView = ({ onRegisterClick }: { onRegisterClick: () => void }) 
         <Logo className="w-12 h-12 mb-8 opacity-80" />
         
         <div className="w-full text-center mb-10">
-          <h1 className="text-2xl font-display font-medium text-white tracking-tight mb-2">Bem-vindo de volta</h1>
+          <h1 className="text-2xl font-display font-medium text-white tracking-tight mb-2">Seja bem vindo(a)</h1>
           <p className="text-zinc-500 text-sm">Acesse sua área de membro</p>
         </div>
 
