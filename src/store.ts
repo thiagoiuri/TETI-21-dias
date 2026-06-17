@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getTodayStr, addDays, diffDays } from './lib/utils';
+import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { db, auth } from './lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export type Pillar = 'trabalhar' | 'estudar' | 'treinar' | 'investir';
 
@@ -46,61 +49,122 @@ export type DailyLog = Record<string, boolean>;
 export interface AppState {
   startDate: string | null;
   logs: Record<string, DailyLog>;
+  completedLessons: Record<number, boolean>;
 }
 
 const INITIAL_STATE: AppState = {
   startDate: null,
   logs: {},
+  completedLessons: {},
 };
 
 export function useTetiStore() {
-  const [state, setState] = useState<AppState>(() => {
-    try {
-      const stored = localStorage.getItem('teti-state-v2');
-      if (stored) return JSON.parse(stored);
-    } catch (e) {
-      console.error('Failed to load state', e);
-    }
-    return INITIAL_STATE;
-  });
+  const [state, setState] = useState<AppState>(INITIAL_STATE);
 
   useEffect(() => {
-    localStorage.setItem('teti-state-v2', JSON.stringify(state));
-  }, [state]);
+    let unsubscribeDoc: () => void;
+    
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const docRef = doc(db, 'users', user.uid);
+        unsubscribeDoc = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setState({
+              startDate: data.startDate || null,
+              logs: data.logs || {},
+              completedLessons: data.completedLessons || {}
+            });
+          }
+        });
+      } else {
+        setState(INITIAL_STATE);
+        if (unsubscribeDoc) unsubscribeDoc();
+      }
+    });
+    
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeDoc) unsubscribeDoc();
+    };
+  }, []);
 
-  const toggleHabit = (date: string, habitId: string) => {
+  const markLessonCompleted = async (day: number) => {
+    if (!auth.currentUser) return;
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    
+    // Optimistic
+    setState((prev) => ({
+      ...prev,
+      completedLessons: {
+        ...prev.completedLessons,
+        [day]: true
+      }
+    }));
+
+    try {
+      await setDoc(userRef, { completedLessons: { [day]: true } }, { merge: true });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const toggleHabit = async (date: string, habitId: string) => {
+    if (!auth.currentUser) return;
+    
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const currentValue = state.logs[date]?.[habitId] || false;
+    const newValue = !currentValue;
+    
+    // Optimistic
     setState((prev) => {
       const newLogs = { ...prev.logs };
-      if (!newLogs[date]) {
-        newLogs[date] = {};
-      }
+      if (!newLogs[date]) newLogs[date] = {};
+      newLogs[date] = { ...newLogs[date], [habitId]: newValue };
+      return { ...prev, startDate: prev.startDate || date, logs: newLogs };
+    });
+
+    try {
+      const isFirstAction = !state.startDate;
+      await setDoc(userRef, {
+        ...(isFirstAction ? { startDate: date } : {}),
+      }, { merge: true });
       
-      newLogs[date] = {
-        ...newLogs[date],
-        [habitId]: !newLogs[date][habitId]
-      };
-      
-      return {
-        ...prev,
-        startDate: prev.startDate || date,
-        logs: newLogs
-      };
+      // Update inner field precisely
+      await updateDoc(userRef, {
+        [`logs.${date}.${habitId}`]: newValue
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const startChallenge = async () => {
+    if (!state.startDate && auth.currentUser) {
+      await setDoc(doc(db, 'users', auth.currentUser.uid), {
+        startDate: getTodayStr()
+      }, { merge: true });
+    }
+  };
+
+  const resetData = async () => {
+    if (!auth.currentUser) return;
+    
+    // Optimistic
+    setState({
+      startDate: null,
+      logs: {},
+      completedLessons: {}
+    });
+
+    await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+      startDate: null,
+      logs: {},
+      completedLessons: {}
     });
   };
 
-  const startChallenge = () => {
-    if (!state.startDate) {
-      setState((prev) => ({ ...prev, startDate: getTodayStr() }));
-    }
-  };
-
-  const resetData = () => {
-    if (confirm('Atenção, leão! Tem certeza que deseja zerar sua jornada? Isso não pode ser desfeito.')) {
-      setState(INITIAL_STATE);
-    }
-  };
-
-  return { state, toggleHabit, startChallenge, resetData };
+  return { state, toggleHabit, startChallenge, resetData, markLessonCompleted };
 }
 
 export const checkDayCompletion = (log?: DailyLog) => {

@@ -1,9 +1,9 @@
-import { Play } from 'lucide-react';
+import { Play, Check } from 'lucide-react';
 import { AppState } from '../store';
 import { cn } from '../lib/utils';
 import { useState } from 'react';
 
-const LESSONS = [
+export const LESSONS = [
   { day: 1, title: 'INTRODUÇÃO', url: 'https://www.youtube.com/embed/s2QM2ZefkOE' },
   { day: 2, title: 'EXERCICIOS PRÁTICOS', url: 'https://www.youtube.com/embed/QneI2Jn99x0' },
   { day: 3, title: 'HIGIENE SOCIAL', url: 'https://www.youtube.com/embed/mEfPMADr1oo' },
@@ -29,15 +29,19 @@ const LESSONS = [
 
 interface LessonsViewProps {
   dayOfChallenge: number;
+  state: AppState;
+  onMarkLessonCompleted: (day: number) => void;
 }
 
-export const LessonsView = ({ dayOfChallenge }: LessonsViewProps) => {
+export const LessonsView = ({ dayOfChallenge, state, onMarkLessonCompleted }: LessonsViewProps) => {
   const [activeLesson, setActiveLesson] = useState<number | null>(null);
 
   // Users can only access lessons up to their current challenge day 
   // (unless challenge not started yet, then we'll show just day 1 or all locked, 
   // let's show day 1 as unlocked so they can watch intro).
   const maxUnlockedsDay = Math.max(1, dayOfChallenge);
+
+  const completedLessons = state.completedLessons || {};
 
   return (
     <div className="flex flex-col gap-6 pt-8 pb-8">
@@ -59,14 +63,30 @@ export const LessonsView = ({ dayOfChallenge }: LessonsViewProps) => {
                 allowFullScreen
               ></iframe>
            </div>
-           <div className="p-4 flex justify-between items-center bg-zinc-950 border-t border-zinc-900">
-             <h3 className="font-bold text-white uppercase tracking-wider text-sm">Aula {activeLesson}</h3>
-             <button 
-               onClick={() => setActiveLesson(null)}
-               className="text-xs font-bold text-red-500 uppercase tracking-widest px-3 py-1 bg-red-500/10 rounded border border-red-500/20"
-             >
-               Fechar
-             </button>
+           <div className="p-4 flex flex-col gap-3 bg-zinc-950 border-t border-zinc-900">
+             <div className="flex justify-between items-center">
+               <h3 className="font-bold text-white uppercase tracking-wider text-sm flex items-center gap-2">
+                 Aula {activeLesson}
+                 {completedLessons[activeLesson] && <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center"><Check className="w-3 h-3 text-black stroke-[3]" /></div>}
+               </h3>
+               <button 
+                 onClick={() => setActiveLesson(null)}
+                 className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-3 py-1 bg-zinc-900 rounded border border-zinc-800"
+               >
+                 Fechar
+               </button>
+             </div>
+             {!completedLessons[activeLesson] && (
+               <button 
+                 onClick={() => {
+                   onMarkLessonCompleted(activeLesson);
+                   setActiveLesson(null);
+                 }}
+                 className="w-full text-xs font-bold text-emerald-500 uppercase tracking-widest px-3 py-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+               >
+                 Marcar Aula como Concluída
+               </button>
+             )}
            </div>
         </div>
       )}
@@ -75,6 +95,7 @@ export const LessonsView = ({ dayOfChallenge }: LessonsViewProps) => {
         {LESSONS.map((lesson) => {
           const isUnlocked = lesson.day <= maxUnlockedsDay;
           const isPlaying = activeLesson === lesson.day;
+          const isCompleted = completedLessons[lesson.day];
           
           return (
             <div 
@@ -90,15 +111,19 @@ export const LessonsView = ({ dayOfChallenge }: LessonsViewProps) => {
             >
               <div className="flex items-center gap-4 flex-1">
                 <div className={cn(
-                  "w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border",
+                  "w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border relative",
                   isPlaying ? "bg-red-600 border-red-600 text-white" : "bg-zinc-900 border-zinc-800 text-zinc-500"
                 )}>
                   {isUnlocked ? <Play className={cn("w-5 h-5", isPlaying ? "fill-white" : "")} /> : <span className="text-xs font-mono">{lesson.day}</span>}
+                  {isCompleted && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center border border-zinc-900">
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1">Dia {lesson.day}</span>
                   <h3 className={cn(
-                    "text-sm font-bold uppercase transition-colors",
+                    "text-sm font-bold uppercase transition-colors flex items-center gap-2",
                     isPlaying ? "text-white" : "text-zinc-300"
                   )}>
                     {lesson.title}
@@ -108,6 +133,11 @@ export const LessonsView = ({ dayOfChallenge }: LessonsViewProps) => {
               {!isUnlocked && (
                 <div className="shrink-0">
                   <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Travado</span>
+                </div>
+              )}
+              {isUnlocked && isCompleted && (
+                <div className="shrink-0 flex items-center justify-center px-2 py-1 bg-emerald-500/10 rounded border border-emerald-500/20">
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Concluída</span>
                 </div>
               )}
             </div>
