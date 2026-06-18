@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { AppState, calculateStats } from '../store';
 import { Logo } from '../components/Logo';
 import { motion } from 'motion/react';
-import { Flame, Star, Target, Zap, Medal, LogOut, Camera, X } from 'lucide-react';
-import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Flame, Star, Target, Zap, Medal, LogOut, Camera, X, Bell } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { auth, db } from '../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -49,6 +48,13 @@ export const ProfileView = ({ state, onReset }: ProfileViewProps) => {
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [reminderTime, setReminderTime] = useState(localStorage.getItem('tetiReminderTime') || '');
+
+  const handleReminderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = e.target.value;
+    setReminderTime(newTime);
+    localStorage.setItem('tetiReminderTime', newTime);
+  };
 
   const handleConfirmReset = () => {
     onReset();
@@ -147,42 +153,29 @@ export const ProfileView = ({ state, onReset }: ProfileViewProps) => {
         />
       </div>
 
-      {/* Progress Chart */}
-      {stats.chartData.length > 0 && (
-        <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl mt-2 grid gap-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Progresso por Pilar (Últimos Dias)</span>
+      {/* Lembrete */}
+      <div className="mt-2">
+        <h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-4">Configurações</h2>
+        <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex items-center justify-between transition-colors hover:border-zinc-700">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 border-zinc-800 bg-zinc-950">
+              <Bell className="w-6 h-6 text-zinc-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wide text-white">Lembrete Diário</h3>
+              <p className="text-[10px] font-bold uppercase tracking-widest mt-0.5 text-zinc-500">Notificação dos hábitos TETI</p>
+            </div>
           </div>
-          <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <XAxis 
-                  dataKey="day" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 10, fill: '#71717a' }} 
-                  dy={10}
-                />
-                <Tooltip 
-                  cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
-                  contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}
-                  itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
-                />
-                <Bar dataKey="Trabalhar" stackId="a" fill="#3b82f6" radius={[0, 0, 4, 4]} />
-                <Bar dataKey="Estudar" stackId="a" fill="#a855f7" />
-                <Bar dataKey="Investir" stackId="a" fill="#10b981" />
-                <Bar dataKey="Treinar" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-wrap justify-center gap-4 mt-2">
-            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500" /> <span className="text-[10px] uppercase font-bold text-zinc-400">Trabalhar</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-purple-500" /> <span className="text-[10px] uppercase font-bold text-zinc-400">Estudar</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500" /> <span className="text-[10px] uppercase font-bold text-zinc-400">Investir</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500" /> <span className="text-[10px] uppercase font-bold text-zinc-400">Treinar</span></div>
+          <div className="relative">
+            <input 
+              type="time" 
+              value={reminderTime}
+              onChange={handleReminderChange}
+              className="bg-black border border-zinc-800 text-white text-sm rounded-xl py-2 px-3 focus:outline-none focus:border-red-500 transition-colors uppercase tracking-widest font-bold"
+            />
           </div>
         </div>
-      )}
+      </div>
 
       {/* Badges / Conquistas */}
       <div className="mt-2">

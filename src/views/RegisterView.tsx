@@ -16,14 +16,14 @@ export const RegisterView = ({ onLoginClick }: { onLoginClick: () => void }) => 
     e.preventDefault();
     setError('');
     
-    if (memberCode.trim() !== 'membroteti') {
+    if (memberCode.trim().toLowerCase() !== 'membroteti') {
       setError('Código de membro inválido.');
       return;
     }
 
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       
       // Criar o perfil inicial vazio
       await setDoc(doc(db, 'users', userCredential.user.uid), {
@@ -69,6 +69,8 @@ export const RegisterView = ({ onLoginClick }: { onLoginClick: () => void }) => 
               value={memberCode}
               onChange={(e) => setMemberCode(e.target.value)}
               required
+              autoCapitalize="none"
+              autoCorrect="off"
               className="w-full bg-transparent border-b border-zinc-800 px-2 py-3 text-white focus:outline-none focus:border-zinc-400 transition-colors placeholder:text-zinc-600 text-sm"
               placeholder="Código de membro (ex: membroteti)"
             />
@@ -80,6 +82,8 @@ export const RegisterView = ({ onLoginClick }: { onLoginClick: () => void }) => 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoCapitalize="none"
+              autoCorrect="off"
               className="w-full bg-transparent border-b border-zinc-800 px-2 py-3 text-white focus:outline-none focus:border-zinc-400 transition-colors placeholder:text-zinc-600 text-sm"
               placeholder="E-mail"
             />

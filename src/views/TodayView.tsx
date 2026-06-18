@@ -16,6 +16,30 @@ interface TodayViewProps {
   onMarkLessonCompleted: (day: number) => void;
 }
 
+const MOTIVATIONAL_QUOTES = [
+  "A disciplina é a ponte entre seus objetivos e suas realizações.",
+  "Não existe atalho para o sucesso, existe o Método TETI.",
+  "O sacrifício de hoje é a força de amanhã.",
+  "A dor do esforço é temporária, a dor do arrependimento é para sempre.",
+  "Seu progresso é medido pelas suas ações diárias.",
+  "Um dia de cada vez. Uma vitória de cada vez.",
+  "O verdadeiro desafio não é começar, é manter o ritmo.",
+  "Grandes resultados nascem da execução implacável do básico.",
+  "Você é o único responsável pela sua jornada.",
+  "Mentalidade forte, execução perfeita. Siga o método.",
+  "Não pare quando estiver cansado, pare quando terminar.",
+  "Sua mente desiste antes do seu corpo. Mostre quem manda.",
+  "O sucesso deixa pistas. O método é o mapa.",
+  "A consistência supera o talento quando o talento não é consistente.",
+  "Você está a um passo da sua melhor versão.",
+  "Cada ponto conta. Cada escolha molda seu futuro.",
+  "Aja hoje como a pessoa que você deseja ser amanhã.",
+  "O método funciona se você trabalha.",
+  "Ame o processo e os resultados chegarão.",
+  "Ação contínua vence a ansiedade paralisante.",
+  "Resiliência não é sobre não cair, é sobre levantar mais rápido.",
+];
+
 export const TodayView = ({ state, onToggleHabit, dayOfChallenge, onStartChallenge, onMarkLessonCompleted }: TodayViewProps) => {
   const today = getTodayStr();
   const log = state.logs[today] || {};
@@ -31,6 +55,8 @@ export const TodayView = ({ state, onToggleHabit, dayOfChallenge, onStartChallen
   const lessonOfDay = LESSONS.find(l => l.day === Math.max(1, Math.min(dayOfChallenge, 21))) || LESSONS[0];
   const isLessonCompleted = state.completedLessons[lessonOfDay.day];
 
+  const todaysQuote = MOTIVATIONAL_QUOTES[dayOfChallenge % MOTIVATIONAL_QUOTES.length];
+
   return (
     <div className="flex flex-col gap-6 pt-8">
       <header className="mb-2">
@@ -42,6 +68,16 @@ export const TodayView = ({ state, onToggleHabit, dayOfChallenge, onStartChallen
           </span>
         </div>
       </header>
+
+      {dayOfChallenge > 0 && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-red-600"></div>
+          <p className="text-xs font-medium text-zinc-300 italic">"{todaysQuote}"</p>
+          <span className="text-[9px] font-bold tracking-widest uppercase text-red-500 mt-2 block">
+            Frase do Dia
+          </span>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-3xl bg-zinc-900 border border-zinc-800 p-6 relative">
         <div className="absolute -top-10 -right-10 w-48 h-48 opacity-[0.03] pointer-events-none mix-blend-screen scale-150">

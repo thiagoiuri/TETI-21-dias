@@ -15,7 +15,7 @@ export const LoginView = ({ onRegisterClick }: { onRegisterClick: () => void }) 
     setError('');
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (err: any) {
       console.error("FIREBASE LOGIN ERROR:", err);
       setError('Credenciais inválidas. Verifique seu e-mail e senha.');
@@ -44,6 +44,8 @@ export const LoginView = ({ onRegisterClick }: { onRegisterClick: () => void }) 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoCapitalize="none"
+              autoCorrect="off"
               className="w-full bg-transparent border-b border-zinc-800 px-2 py-3 text-white focus:outline-none focus:border-zinc-400 transition-colors placeholder:text-zinc-600 text-sm"
               placeholder="E-mail"
             />
