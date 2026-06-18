@@ -44,7 +44,7 @@ export default function App() {
     );
   }
 
-  if (profile && !profile.profileCompleted) {
+  if (user && (!profile || !profile.profileCompleted)) {
     return (
       <div className="min-h-[100dvh] bg-black font-sans text-white">
         <div className="fixed inset-0 pointer-events-none flex items-center justify-center opacity-[0.03] select-none z-0">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Logo } from '../components/Logo';
@@ -23,14 +23,16 @@ export const ProfileSetupView = () => {
 
     try {
       const docRef = doc(db, 'users', user.uid);
-      await updateDoc(docRef, {
+      await setDoc(docRef, {
+        uid: user.uid,
+        email: user.email,
         fullName,
         nickname,
         birthDate,
         mainObjective,
         profileCompleted: true
-      });
-      await refreshProfile();
+      }, { merge: true });
+      // Component will unmount automatically as profile gets updated by onSnapshot
     } catch (err: any) {
       setError('Erro ao salvar o perfil. Tente novamente.');
     } finally {
@@ -74,13 +76,14 @@ export const ProfileSetupView = () => {
             />
           </div>
 
-          <div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-zinc-500 px-2">Data de Nascimento</label>
             <input 
               type="date" 
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
               required
-              className="w-full bg-transparent border-b border-zinc-800 px-2 py-3 text-zinc-400 focus:outline-none focus:border-zinc-400 focus:text-white transition-colors text-sm"
+              className="w-full bg-transparent border-b border-zinc-800 px-2 py-2 text-zinc-400 focus:outline-none focus:border-zinc-400 focus:text-white transition-colors text-sm"
             />
           </div>
 

@@ -22,6 +22,21 @@ export const RegisterView = ({ onLoginClick }: { onLoginClick: () => void }) => 
     }
 
     setLoading(true);
+
+    // Verificação para alertar se as variáveis de ambiente não foram configuradas na hospedagem
+    if (import.meta.env.PROD && typeof import.meta.env.VITE_FIREBASE_API_KEY === 'undefined') {
+      try {
+        const configModules = import.meta.glob('../../firebase-applet-config.json', { eager: true });
+        if (Object.keys(configModules).length === 0) {
+           setError('Variáveis de ambiente do Firebase ausentes. Configure as variáveis VITE_FIREBASE_* em seu provedor de hospedagem.');
+           setLoading(false);
+           return;
+        }
+      } catch (e) {
+        // Ignorar
+      }
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       
